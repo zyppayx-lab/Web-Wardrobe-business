@@ -1,8 +1,14 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>My Submissions | Web Wardrobe</title><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<title>My Submissions | Web Wardrobe</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
 *{
 margin:0;
 padding:0;
@@ -36,8 +42,25 @@ margin:auto;
 padding:40px 20px;
 }
 
-h1{
-margin-bottom:30px;
+.tabs{
+display:flex;
+gap:10px;
+margin-bottom:20px;
+flex-wrap:wrap;
+}
+
+.tab{
+padding:10px 16px;
+border:none;
+background:#eee;
+border-radius:12px;
+cursor:pointer;
+font-weight:700;
+}
+
+.tab.active{
+background:#111;
+color:#fff;
 }
 
 .grid{
@@ -69,6 +92,7 @@ border-radius:999px;
 font-size:13px;
 font-weight:700;
 margin-top:10px;
+text-transform:capitalize;
 }
 
 .pending{
@@ -86,17 +110,6 @@ background:#ffeaea;
 color:#c40000;
 }
 
-.btn{
-display:inline-block;
-margin-top:12px;
-padding:12px 16px;
-background:#111;
-color:white;
-text-decoration:none;
-border-radius:12px;
-font-weight:700;
-}
-
 .empty{
 text-align:center;
 padding:60px;
@@ -104,147 +117,150 @@ background:white;
 border-radius:24px;
 box-shadow:0 5px 18px rgba(0,0,0,0.05);
 }
+</style>
+</head>
 
-</style></head><body><header>
-<div class="logo">Web Wardrobe</div><a href="dashboard.html" class="btn">
-Dashboard
-</a>
-</header><div class="container"><h1>My Submissions</h1><div id="submissionsContainer"><div class="empty">
-Loading submissions...
-</div></div></div><script type="module">
+<body>
 
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+<header>
+<div class="logo">Web Wardrobe</div>
+<a href="dashboard.html">Dashboard</a>
+</header>
+
+<div class="container">
+
+<h1>My Submissions</h1>
+
+<!-- TABS -->
+<div class="tabs">
+<button class="tab active" onclick="switchTab('pending')">🟡 Pending</button>
+<button class="tab" onclick="switchTab('approved')">🟢 Approved</button>
+<button class="tab" onclick="switchTab('rejected')">🔴 Rejected</button>
+</div>
+
+<!-- OUTPUT -->
+<div id="submissionsContainer">
+<div class="empty">Loading submissions...</div>
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
 import {
 getAuth,
 onAuthStateChanged
-}
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import {
 getFirestore,
 collection,
 query,
 where,
-getDocs,
-orderBy
-}
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+getDocs
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBoSJggPoHfiI2quek_5mV5gPSAhSaXFZE",
-  authDomain: "web-wardrobe.firebaseapp.com",
-  projectId: "web-wardrobe",
-  storageBucket: "web-wardrobe.appspot.com",
-  messagingSenderId: "201587857341",
-  appId: "1:201587857341:web:044fe04f2503168881a4d4"
+apiKey: "AIzaSyBoSJggPoHfiI2quek_5mV5gPSAhSaXFZE",
+authDomain: "web-wardrobe.firebaseapp.com",
+projectId: "web-wardrobe",
+storageBucket: "web-wardrobe.appspot.com",
+messagingSenderId: "201587857341",
+appId: "1:201587857341:web:044fe04f2503168881a4d4"
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getFirestore(app);
 
-const container =
-document.getElementById("submissionsContainer");
+const container = document.getElementById("submissionsContainer");
 
-onAuthStateChanged(auth, async(user)=>{
+let allPosts = [];
+let currentTab = "pending";
 
-if(!user){
+onAuthStateChanged(auth, async (user) => {
 
+if (!user) {
 location.href = "login.html";
-
 return;
-
 }
 
-try{
-
-const q = query(
-collection(db,"businessSubmissions"),
-where("userId","==",user.uid),
-orderBy("createdAt","desc")
+const snap = await getDocs(
+query(
+collection(db, "businessSubmissions"),
+where("userId", "==", user.uid)
+)
 );
 
-const snap = await getDocs(q);
+allPosts = [];
 
-if(snap.empty){
+snap.forEach(docSnap => {
+allPosts.push(docSnap.data());
+});
 
-container.innerHTML = `
-<div class="empty">
-No submissions found.
-</div>
-`;
+renderTab();
 
+});
+
+window.switchTab = function(tab){
+
+currentTab = tab;
+
+document.querySelectorAll(".tab").forEach(btn=>{
+btn.classList.remove("active");
+});
+
+event.target.classList.add("active");
+
+renderTab();
+};
+
+function renderTab(){
+
+let filtered = allPosts.filter(post => {
+
+if(currentTab === "pending")
+return !post.status || post.status === "pending";
+
+if(currentTab === "approved")
+return post.status === "approved";
+
+if(currentTab === "rejected")
+return post.status === "rejected";
+
+});
+
+if(filtered.length === 0){
+container.innerHTML = `<div class="empty">No ${currentTab} submissions</div>`;
 return;
-
 }
 
-let html =
-'<div class="grid">';
-
-snap.forEach(docSnap=>{
-
-const post = docSnap.data();
-
-let statusClass =
-"pending";
-
-if(post.status === "approved")
-statusClass = "approved";
-
-if(post.status === "rejected")
-statusClass = "rejected";
-
-html += `
-
+container.innerHTML = `
+<div class="grid">
+${filtered.map(post => `
 <div class="card">
 
 <h3>${post.title || ""}</h3>
 
-<p>
-<strong>Type:</strong>
-${post.type || ""}
-</p>
+<p><strong>Type:</strong> ${post.promotionType || ""}</p>
 
-<p>
-<strong>Category:</strong>
-${post.category || ""}
-</p>
+<p><strong>Category:</strong> ${post.category || ""}</p>
 
-<p>
-${post.shortDescription || ""}
-</p>
+<p>${post.shortDescription || ""}</p>
 
-<span class="status ${statusClass}">
+<span class="status ${post.status || "pending"}">
 ${post.status || "pending"}
 </span>
 
 </div>
-
-`;
-
-});
-
-html += "</div>";
-
-container.innerHTML = html;
-
-}catch(error){
-
-container.innerHTML = `
-<div class="empty">
-Failed to load submissions.
+`).join("")}
 </div>
 `;
-
-console.error(error);
-
 }
 
-});
+</script>
 
-</script></body>
-</html>
+</body>
+  </html>
