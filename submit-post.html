@@ -105,14 +105,23 @@ font-weight:600;
 <select id="promotionType" required>
 <option value="affiliate">Affiliate (Free)</option>
 <option value="sponsored">Sponsored (Paid)</option>
-</select><div id="paymentBox" class="payment-box"><h3>Sponsored Post Payment</h3><p><strong>Bank Name:</strong> Paystack-Titan</p><p><strong>Account Name:</strong> Moreinfopay/Businesswebwardrobe</p><p><strong>Account Number:</strong> 9740190119</p><br><label>Payment Screenshot</label>
+</select><div id="paymentBox" class="payment-box">
+  <h3>Sponsored Post Payment</h3>
 
-<input
-type="file"
-id="paymentProof"
-accept="image/*">
+  <p style="font-size:18px;color:red;font-weight:800;">
+    Amount: ₦2,500 per Sponsored Post
+  </p>
 
-</div><label>Title</label>
+  <p><strong>Bank Name:</strong> Paystack-Titan</p>
+  <p><strong>Account Name:</strong> Moreinfopay/Businesswebwardrobe</p>
+  <p><strong>Account Number:</strong> 9740190119</p>
+
+  <br>
+
+  <label>Payment Screenshot</label>
+  <input type="file" id="paymentProof" accept="image/*">
+</div>
+  <label>Title</label>
 <input type="text" id="title" required>
 
 <label>Category</label>
