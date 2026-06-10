@@ -127,6 +127,27 @@ accept="image/*">
 <textarea id="shortDescription" required></textarea><label>Full Content</label>
 
 <textarea id="longDescription" required></textarea><label>Featured Image URL</label>
+
+<input type="url" id="imageUrl" required><p style="
+margin-top:10px;
+font-size:14px;
+color:#666;
+line-height:1.6;
+">Need an image URL?
+
+Visit https://postimages.org/
+
+1. Upload your image
+2. Open the uploaded image
+3. Click Share
+4. Copy Direct Link
+5. Paste the link above
+
+Example:
+
+https://i.postimg.cc/example/image.jpg
+
+</p>
 <input type="url" id="imageUrl" required>
 
 <label>Affiliate Link (Optional)</label>
@@ -266,93 +287,63 @@ reader.readAsDataURL(file);
 
 });
 
-document
-.getElementById("postForm")
-.addEventListener("submit",async(e)=>{
+document.getElementById("postForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-e.preventDefault();
+  const message = document.getElementById("message");
+  const promotion = document.getElementById("promotionType").value;
 
-if(!currentUser) return;
+  // ✅ BLOCK EMPTY PAYMENT PROOF
+  if (promotion === "sponsored") {
+  if (!paymentBase64 || paymentBase64.length < 50) {
+    message.textContent =
+      "❌ Valid payment screenshot is required for sponsored posts.";
+    message.style.color = "red";
+    return;
+  }
+  }
+  try {
+    await addDoc(collection(db, "businessSubmissions"), {
+      userId: currentUser.uid,
+      email: currentUser.email,
 
-const message =
-document.getElementById("message");
+      promotionType: promotion,
 
-try{
+      title: document.getElementById("title").value.trim(),
+      category: document.getElementById("category").value,
+      shortDescription: document.getElementById("shortDescription").value.trim(),
+      longDescription: document.getElementById("longDescription").value.trim(),
 
-await addDoc(
-collection(db,"businessSubmissions"),
-{
+      media: [document.getElementById("imageUrl").value.trim()],
 
-userId: currentUser.uid,
+      affiliateLink: document.getElementById("affiliateLink").value.trim(),
+      websiteUrl: document.getElementById("websiteUrl").value.trim(),
 
-email: currentUser.email,
+      paymentProof: promotion === "sponsored" ? paymentBase64 : null,
 
-promotionType:
-document.getElementById("promotionType").value,
+      paymentStatus:
+  promotion === "sponsored"
+    ? (paymentBase64 ? "awaiting_verification" : "missing_proof")
+    : "not_required",
+      
+      status: "pending",
+      views: 0,
+      createdAt: serverTimestamp()
+    });
 
-title:
-document.getElementById("title").value.trim(),
+    message.textContent = "Submission sent successfully. Awaiting review.";
+    message.style.color = "green";
 
-category:
-document.getElementById("category").value,
+    document.getElementById("postForm").reset();
+    paymentBase64 = "";
+    paymentBox.style.display = "none";
 
-shortDescription:
-document.getElementById("shortDescription").value.trim(),
-
-longDescription:
-document.getElementById("longDescription").value.trim(),
-
-media:[
-document.getElementById("imageUrl").value.trim()
-],
-
-affiliateLink:
-document.getElementById("affiliateLink").value.trim(),
-
-websiteUrl:
-document.getElementById("websiteUrl").value.trim(),
-
-paymentProof:
-paymentBase64,
-
-paymentStatus:
-document.getElementById("promotionType").value
-=== "sponsored"
-? "awaiting_verification"
-: "",
-
-status:"pending",
-
-views:0,
-
-createdAt:
-serverTimestamp()
-
-}
-);
-
-message.textContent =
-"Submission sent successfully. Awaiting review.";
-
-document
-.getElementById("postForm")
-.reset();
-
-paymentBase64 = "";
-
-paymentBox.style.display = "none";
-
-}catch(error){
-
-console.error(error);
-
-message.textContent =
-"Submission failed: " + error.message;
-
-}
-
+  } catch (error) {
+    console.error(error);
+    message.textContent = "Submission failed: " + error.message;
+    message.style.color = "red";
+  }
 });
-
 </script></body>
   </html>
                                                                                                                                 </html>
